@@ -54,21 +54,47 @@ namespace Funcery
             return !string.IsNullOrEmpty(value);
         }
 
+        private bool SecuredProperty(string prop)
+        {
+            return prop == "LastName";
+        }
+
         private void UpdateDb(string prop, string value)
         {
             Db[prop] = value;
             Console.WriteLine($"property: {prop} value changed to: {value}");
         }
         
-        public Action<string, string> GetUpdateFunction()
+        public Action<string, string> GetUpdateFunction(string role)
         {
-            Action<string, string> updateThingy = (prop, value) =>
+            Action<string, string> updateThingy = null;
+
+            if (role == "admin")
             {
-                if (Validate(value))
+                updateThingy = (prop, value) =>
                 {
-                    UpdateDb(prop, value);
-                }
-            };
+                    if (Validate(value))
+                    {
+                        UpdateDb(prop, value);
+                    }
+                };
+            }
+            else
+            {
+                updateThingy = (prop, value) =>
+                {
+                    if (SecuredProperty(prop))
+                    {
+                        Console.WriteLine("only admins are allowed to update: {0}", prop);
+                        return;
+                    }
+
+                    if (Validate(value))
+                    {
+                        UpdateDb(prop, value);
+                    }
+                };
+            }
 
             return updateThingy;
         }
